@@ -1,4 +1,4 @@
-name: Build PriBrowser
+name: Build PrivBrowser
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       - name: Find project
         shell: pwsh
@@ -33,10 +33,7 @@ jobs:
       - name: Restore
         run: dotnet restore "$env:PROJECT"
 
-      - name: Build
-        run: dotnet build "$env:PROJECT" -c Release --no-restore
-
-      - name: Publish
+      - name: Publish PrivBrowser
         run: |
           dotnet publish "$env:PROJECT" `
             -c Release `
@@ -46,8 +43,44 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -o publish
 
-      - name: Upload PriBrowser
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Create Installer Script
+        shell: pwsh
+        run: |
+          @"
+          [Setup]
+          AppName=PrivBrowser
+          AppVersion=1.0.0
+          DefaultDirName={autopf}\PrivBrowser
+          DefaultGroupName=PrivBrowser
+          OutputDir=installer
+          OutputBaseFilename=PrivBrowser-Setup
+          Compression=lzma
+          SolidCompression=yes
+          ArchitecturesInstallIn64BitMode=x64
+
+          [Files]
+          Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+
+          [Icons]
+          Name: "{group}\PrivBrowser"; Filename: "{app}\PrivBrowser.exe"
+          Name: "{autodesktop}\PrivBrowser"; Filename: "{app}\PrivBrowser.exe"
+
+          [Run]
+          Filename: "{app}\PrivBrowser.exe"; Description: "Launch PrivBrowser"; Flags: nowait postinstall skipifsilent
+          "@ | Out-File -Encoding UTF8 PrivBrowser.iss
+
+      - name: Build Installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" PrivBrowser.iss
+
+      - name: Upload Installer
         uses: actions/upload-artifact@v4
         with:
-          name: PriBrowser-Windows-x64
-          path: publish/
+          name: PrivBrowser-Installer
+          path: installer\PrivBrowser-Setup.exe
