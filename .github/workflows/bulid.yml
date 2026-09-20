@@ -27,13 +27,13 @@ jobs:
             exit 1
           }
 
-          Write-Host "Found project: $($project.FullName)"
+          Write-Host "Found: $($project.FullName)"
           echo "PROJECT=$($project.FullName)" >> $env:GITHUB_ENV
 
       - name: Restore
         run: dotnet restore "$env:PROJECT"
 
-      - name: Publish PrivBrowser
+      - name: Publish
         run: |
           dotnet publish "$env:PROJECT" `
             -c Release `
@@ -48,39 +48,23 @@ jobs:
         run: |
           choco install innosetup --no-progress -y
 
-      - name: Create Installer Script
+      - name: Download WebView2 Bootstrapper
         shell: pwsh
         run: |
-          @"
-          [Setup]
-          AppName=PrivBrowser
-          AppVersion=1.0.0
-          DefaultDirName={autopf}\PrivBrowser
-          DefaultGroupName=PrivBrowser
-          OutputDir=installer
-          OutputBaseFilename=PrivBrowser-Setup
-          Compression=lzma
-          SolidCompression=yes
-          ArchitecturesInstallIn64BitMode=x64
+          New-Item -ItemType Directory -Force -Path InstallerFiles | Out-Null
 
-          [Files]
-          Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
-
-          [Icons]
-          Name: "{group}\PrivBrowser"; Filename: "{app}\PrivBrowser.exe"
-          Name: "{autodesktop}\PrivBrowser"; Filename: "{app}\PrivBrowser.exe"
-
-          [Run]
-          Filename: "{app}\PrivBrowser.exe"; Description: "Launch PrivBrowser"; Flags: nowait postinstall skipifsilent
-          "@ | Out-File -Encoding UTF8 PrivBrowser.iss
+          Invoke-WebRequest `
+            -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" `
+            -OutFile "InstallerFiles\MicrosoftEdgeWebView2Setup.exe"
 
       - name: Build Installer
         shell: pwsh
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" PrivBrowser.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "Installer\PrivBrowser.iss"
 
       - name: Upload Installer
         uses: actions/upload-artifact@v4
         with:
           name: PrivBrowser-Installer
-          path: installer\PrivBrowser-Setup.exe
+          path: InstallerOutput\PrivBrowser-Setup.exe
