@@ -1,4 +1,4 @@
-PriBrowser
+PrivBrowser
 
 A lightweight, open-source web browser project built with C#.
 
