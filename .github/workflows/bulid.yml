@@ -1,0 +1,53 @@
+name: Build PriBrowser
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Find project
+        shell: pwsh
+        run: |
+          $project = Get-ChildItem -Path . -Filter *.csproj | Select-Object -First 1
+
+          if (-not $project) {
+            Write-Error "No .csproj file found!"
+            exit 1
+          }
+
+          Write-Host "Found project: $($project.FullName)"
+          echo "PROJECT=$($project.FullName)" >> $env:GITHUB_ENV
+
+      - name: Restore
+        run: dotnet restore "$env:PROJECT"
+
+      - name: Build
+        run: dotnet build "$env:PROJECT" -c Release --no-restore
+
+      - name: Publish Windows EXE
+        run: |
+          dotnet publish "$env:PROJECT" `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o publish
+
+      - name: Upload PriBrowser
+        uses: actions/upload-artifact@v4
+        with:
+          name: PriBrowser-Windows-x64
+          path: publish/
