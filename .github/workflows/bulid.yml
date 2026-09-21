@@ -1,6 +1,6 @@
 name: Build PrivBrowser
 
-on:
+"on":
 push:
 workflow_dispatch:
 
@@ -12,18 +12,15 @@ steps:
   - name: Checkout
     uses: actions/checkout@v4
 
-  - name: Setup .NET 8
+  - name: Setup .NET
     uses: actions/setup-dotnet@v4
     with:
       dotnet-version: "8.0.x"
 
-  - name: Find PrivBrowser project
+  - name: Find project
     shell: pwsh
     run: |
-      $project = Get-ChildItem `
-        -Path "$env:GITHUB_WORKSPACE" `
-        -Recurse `
-        -Filter "PrivBrowser.csproj" |
+      $project = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter "PrivBrowser.csproj" |
         Select-Object -First 1
 
       if (-not $project) {
@@ -32,114 +29,47 @@ steps:
       }
 
       Write-Host "Found: $($project.FullName)"
-
       "PROJECT=$($project.FullName)" >> $env:GITHUB_ENV
-      "PROJECT_DIR=$($project.Directory.FullName)" >> $env:GITHUB_ENV
 
   - name: Restore
     run: dotnet restore "$env:PROJECT"
 
-  - name: Build
-    run: |
-      dotnet build "$env:PROJECT" `
-        -c Release `
-        -r win-x64 `
-        --no-restore
-
   - name: Publish
     run: |
-      Remove-Item -Recurse -Force "publish" -ErrorAction SilentlyContinue
-
       dotnet publish "$env:PROJECT" `
         -c Release `
         -r win-x64 `
         --self-contained true `
-        --no-restore `
         -p:PublishSingleFile=true `
         -p:IncludeNativeLibrariesForSelfExtract=true `
         -o publish
 
-  - name: Check published application
-    shell: pwsh
-    run: |
-      Write-Host "===== Published files ====="
-      Get-ChildItem "publish" -Recurse
-
-      $exe = Get-ChildItem "publish" -Filter "*.exe"
-
-      if (-not $exe) {
-        Write-Error "No executable was produced!"
-        exit 1
-      }
-
-      Write-Host "Executable found:"
-      $exe | ForEach-Object {
-        Write-Host $_.FullName
-      }
-
   - name: Install Inno Setup
     shell: pwsh
     run: |
-      choco install innosetup -y --no-progress
+      choco install innosetup --no-progress -y
 
-  - name: Download WebView2 Bootstrapper
+  - name: Download WebView2
     shell: pwsh
     run: |
-      New-Item `
-        -ItemType Directory `
-        -Force `
-        -Path "InstallerFiles" | Out-Null
+      New-Item -ItemType Directory -Force -Path "InstallerFiles" | Out-Null
 
       Invoke-WebRequest `
         -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" `
         -OutFile "InstallerFiles\MicrosoftEdgeWebView2Setup.exe"
 
-      if (-not (Test-Path "InstallerFiles\MicrosoftEdgeWebView2Setup.exe")) {
-        Write-Error "WebView2 bootstrapper download failed!"
-        exit 1
-      }
-
-  - name: Build Inno Setup installer
+  - name: Build Installer
     shell: pwsh
     run: |
-      if (-not (Test-Path "Installer\PrivBrowser.iss")) {
-        Write-Error "Installer\PrivBrowser.iss not found!"
-        exit 1
-      }
-
-      New-Item `
-        -ItemType Directory `
-        -Force `
-        -Path "InstallerOutput" | Out-Null
+      New-Item -ItemType Directory -Force -Path "InstallerOutput" | Out-Null
 
       & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
         "/OInstallerOutput" `
         "Installer\PrivBrowser.iss"
 
-      if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-      }
-
-  - name: Check installer
-    shell: pwsh
-    run: |
-      if (-not (Test-Path "InstallerOutput\PrivBrowser-Setup.exe")) {
-        Write-Error "PrivBrowser-Setup.exe was not created!"
-        exit 1
-      }
-
-      Get-Item "InstallerOutput\PrivBrowser-Setup.exe"
-
-  - name: Upload installer
+  - name: Upload Installer
     uses: actions/upload-artifact@v4
     with:
       name: PrivBrowser-Installer
       path: InstallerOutput\PrivBrowser-Setup.exe
-      if-no-files-found: error
-
-  - name: Upload portable build
-    uses: actions/upload-artifact@v4
-    with:
-      name: PrivBrowser-Publish
-      path: publish\**
       if-no-files-found: error
