@@ -1,6 +1,10 @@
 name: Build PrivBrowser
 
 on:
+  push:
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -11,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
@@ -19,7 +23,10 @@ jobs:
       - name: Find project
         shell: pwsh
         run: |
-          $project = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter "PrivBrowser.csproj" |
+          $project = Get-ChildItem `
+            -Path "$env:GITHUB_WORKSPACE" `
+            -Recurse `
+            -Filter "PrivBrowser.csproj" |
             Select-Object -First 1
 
           if (-not $project) {
@@ -34,42 +41,14 @@ jobs:
         run: dotnet restore "$env:PROJECT"
 
       - name: Build
-        run: |
-          dotnet build "$env:PROJECT" `
-            -c Release `
-            -r win-x64 `
-            --no-restore
+        run: dotnet build "$env:PROJECT" -c Release -r win-x64 --no-restore
 
       - name: Publish
-        run: |
-          dotnet publish "$env:PROJECT" `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
-            --no-restore `
-            -o publish
+        run: dotnet publish "$env:PROJECT" -c Release -r win-x64 --self-contained true --no-restore -o publish
 
-      - name: Install Inno Setup
-        shell: pwsh
-        run: |
-          choco install innosetup -y --no-progress
-
-      - name: Build Installer
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "InstallerOutput" | Out-Null
-
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
-            "/OInstallerOutput" `
-            "Installer\PrivBrowser.iss"
-
-          if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
-          }
-
-      - name: Upload Installer
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: PrivBrowser-Installer
-          path: InstallerOutput\*.exe
+          name: PrivBrowser
+          path: publish/**
           if-no-files-found: error
