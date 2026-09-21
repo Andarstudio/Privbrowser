@@ -26,11 +26,8 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore NuGet Packages
-      run: dotnet restore privbrowser/PrivBrowser.csproj -r win-x64
-
-    - name: Publish PrivBrowser
-      run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained true -o ./publish --no-restore
+    - name: Restore and Publish PrivBrowser
+      run: dotnet publish privbrowser/PrivBrowser.csproj -c Release --self-contained true -o ./publish
 
     - name: Copy Icon to Publish Output
       shell: pwsh
