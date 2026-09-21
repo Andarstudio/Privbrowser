@@ -12,7 +12,7 @@ steps:
   - name: Checkout
     uses: actions/checkout@v4
 
-  - name: Setup .NET 8
+  - name: Setup .NET
     uses: actions/setup-dotnet@v4
     with:
       dotnet-version: "8.0.x"
@@ -20,107 +20,87 @@ steps:
   - name: Find project
     shell: pwsh
     run: |
-      $project = Get-ChildItem -Recurse -Filter *.csproj |
+      $project = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter "PrivBrowser.csproj" |
         Select-Object -First 1
 
       if (-not $project) {
-        Write-Error "No .csproj file found!"
+        Write-Error "PrivBrowser.csproj not found."
         exit 1
       }
 
-      Write-Host "Found project:"
-      Write-Host $project.FullName
-
+      Write-Host "Project: $($project.FullName)"
       "PROJECT=$($project.FullName)" >> $env:GITHUB_ENV
-      "PROJECT_DIR=$($project.Directory.FullName)" >> $env:GITHUB_ENV
 
-  - name: Fix CefSharp namespace
-    shell: pwsh
-    run: |
-      $app = Join-Path $env:PROJECT_DIR "App.xaml.cs"
-
-      if (Test-Path $app) {
-        $content = Get-Content $app -Raw
-
-        if ($content -notmatch "using CefSharp;") {
-          Write-Host "Adding using CefSharp;"
-          $content = "using CefSharp;`r`n" + $content
-          Set-Content $app $content -Encoding UTF8
-        }
-      }
-      else {
-        Write-Host "App.xaml.cs not found, skipping."
-      }
-
-  - name: Restore NuGet packages
+  - name: Restore
     run: dotnet restore "$env:PROJECT"
 
   - name: Build
     run: |
       dotnet build "$env:PROJECT" `
-        -c Release `
-        -r win-x64 `
-        --no-restore
+        --configuration Release `
+        --no-restore `
+        --runtime win-x64
 
-  - name: Publish CefSharp application
+  - name: Publish
     run: |
       dotnet publish "$env:PROJECT" `
-        -c Release `
-        -r win-x64 `
+        --configuration Release `
+        --runtime win-x64 `
         --self-contained false `
         --no-restore `
-        -o publish
+        --output "$env:GITHUB_WORKSPACE\publish"
 
-  - name: Verify publish directory
+  - name: Check build
     shell: pwsh
     run: |
-      Write-Host "===== Published files ====="
-      Get-ChildItem publish -Recurse |
-        Select-Object FullName, Length
+      Write-Host "===== PUBLISH DIRECTORY ====="
+      Get-ChildItem "$env:GITHUB_WORKSPACE\publish" -Recurse
 
-      if (-not (Get-ChildItem publish -Filter *.exe)) {
-        Write-Error "No EXE was produced!"
+      $exe = Get-ChildItem "$env:GITHUB_WORKSPACE\publish" -Filter "*.exe"
+
+      if (-not $exe) {
+        Write-Error "No EXE was created."
         exit 1
+      }
+
+      Write-Host "EXE found:"
+      $exe | ForEach-Object {
+        Write-Host $_.FullName
       }
 
   - name: Install Inno Setup
     shell: pwsh
     run: |
-      choco install innosetup --no-progress -y
+      choco install innosetup --yes --no-progress
 
   - name: Build installer
     shell: pwsh
     run: |
       if (-not (Test-Path "Installer\PrivBrowser.iss")) {
-        Write-Error "Installer\PrivBrowser.iss was not found!"
+        Write-Error "Installer\PrivBrowser.iss not found."
         exit 1
       }
 
-      New-Item -ItemType Directory -Force -Path InstallerOutput | Out-Null
+      New-Item -ItemType Directory -Force "InstallerOutput" | Out-Null
 
       & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
-        "/OInstallerOutput" `
+        "/O$env:GITHUB_WORKSPACE\InstallerOutput" `
         "Installer\PrivBrowser.iss"
 
       if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
       }
 
-  - name: List installer output
-    shell: pwsh
-    run: |
-      Get-ChildItem InstallerOutput -Recurse
-
   - name: Upload installer
     uses: actions/upload-artifact@v4
     with:
       name: PrivBrowser-Installer
-      path: InstallerOutput/*.exe
+      path: InstallerOutput\*.exe
       if-no-files-found: error
 
   - name: Upload portable build
     uses: actions/upload-artifact@v4
     with:
       name: PrivBrowser-Portable
-      path: publish/**
+      path: publish\**
       if-no-files-found: error
