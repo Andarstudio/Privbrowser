@@ -8,12 +8,7 @@
     <AssemblyName>PrivBrowser</AssemblyName>
     <RootNamespace>PrivBrowser</RootNamespace>
     <ApplicationIcon>app.ico</ApplicationIcon>
-
-    <!-- CefSharp ships native x64 binaries; AnyCPU is not supported -->
-    <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
