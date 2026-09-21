@@ -4,12 +4,14 @@
 
 #define MyAppName "PrivBrowser"
 #define MyAppVersion "1.0"
+#define MyAppPublisher "Andar Studio LLC"
 #define MyAppExeName "PrivBrowser.exe"
 
 [Setup]
 AppId={{A4C2E1F8-3B5D-4E9A-8C7F-PRIVBROWSER01}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\PrivBrowser
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
@@ -26,7 +28,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"
 
 [Files]
-Source: "..\publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
+Source: "..\privbrowser\publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
