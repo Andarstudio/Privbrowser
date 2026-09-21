@@ -1,31 +1,24 @@
-using System.Windows;
-using CefSharp;
+<Project Sdk="Microsoft.NET.Sdk">
 
-namespace PrivBrowser
-{
-    public partial class App : Application
-    {
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PrivBrowser</AssemblyName>
+    <RootNamespace>PrivBrowser</RootNamespace>
+    <ApplicationIcon>app.ico</ApplicationIcon>
 
-            var settings = new CefSettings
-            {
-                CachePath = System.IO.Path.Combine(
-                    System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData),
-                    "PrivBrowser", "CefCache"),
-                PersistSessionCookies = true
-            };
+    <!-- CefSharp ships native x64 binaries; AnyCPU is not supported -->
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
 
-            settings.CefCommandLineArgs.Add("disable-background-networking", "1");
+  <ItemGroup>
+    <PackageReference Include="CefSharp.Common.NETCore" Version="122.*" />
+    <PackageReference Include="CefSharp.Wpf.NETCore" Version="122.*" />
+  </ItemGroup>
 
-            Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
-        }
-
-        protected override void OnExit(ExitEventArgs e)
-        {
-            Cef.Shutdown();
-            base.OnExit(e);
-        }
-    }
-}
+</Project>
