@@ -1,0 +1,75 @@
+name: Build PrivBrowser
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Find project
+        shell: pwsh
+        run: |
+          $project = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter "PrivBrowser.csproj" |
+            Select-Object -First 1
+
+          if (-not $project) {
+            Write-Error "PrivBrowser.csproj not found!"
+            exit 1
+          }
+
+          Write-Host "Found: $($project.FullName)"
+          "PROJECT=$($project.FullName)" >> $env:GITHUB_ENV
+
+      - name: Restore
+        run: dotnet restore "$env:PROJECT"
+
+      - name: Build
+        run: |
+          dotnet build "$env:PROJECT" `
+            -c Release `
+            -r win-x64 `
+            --no-restore
+
+      - name: Publish
+        run: |
+          dotnet publish "$env:PROJECT" `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            --no-restore `
+            -o publish
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+
+      - name: Build Installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "InstallerOutput" | Out-Null
+
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/OInstallerOutput" `
+            "Installer\PrivBrowser.iss"
+
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Upload Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrivBrowser-Installer
+          path: InstallerOutput\*.exe
+          if-no-files-found: error
