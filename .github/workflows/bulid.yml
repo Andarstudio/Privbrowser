@@ -1,9 +1,15 @@
-name: Build PrivBrowser
+name: Build and Release PrivBrowser
 
 on:
   push:
     branches: [ "main", "master" ]
+    tags: 
+      - '1.0'
+      - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -33,15 +39,12 @@ jobs:
     - name: Build Installer
       run: iscc privbrowser/installer.iss
 
-    - name: Upload Installer Artifact
-      uses: actions/upload-artifact@v4
+    - name: Publish Release to GitHub
+      uses: softprops/action-gh-release@v3
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        name: PrivBrowser-Setup
-        path: '**/PrivBrowser-Setup.exe'
-
-    - name: Upload Portable Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: PrivBrowser-Portable
-        path: PrivBrowser-Portable.zip
+        files: |
+          **/PrivBrowser-Setup.exe
+          PrivBrowser-Portable.zip
+        generate_release_notes: true
         
