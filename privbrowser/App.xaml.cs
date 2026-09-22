@@ -1,5 +1,6 @@
 using System.Windows;
 using CefSharp;
+using CefSharp.Wpf; // <-- Add this namespace directive
 
 namespace PrivBrowser
 {
