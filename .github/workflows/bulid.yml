@@ -30,15 +30,13 @@ jobs:
 
     - name: Compile Installer (.exe)
       run: |
-        # Inno Setup compiler path on windows-latest runner
         $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
         & $iscc privbrowser\installer.iss
 
-    - name: Upload Portable & Installer Artifacts
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: PrivBrowser-Releases
         path: |
           privbrowser/publish/
           privbrowser/Output/
-          
