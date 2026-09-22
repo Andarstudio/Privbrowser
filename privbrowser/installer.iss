@@ -17,7 +17,7 @@ UninstallDisplayIcon={app}\PrivBrowser.exe
 PrivilegesRequired=admin
 
 ; Privacy Policy Page
-LicenseFile=privacy_policy.txt
+LicenseFile=privacypolicy.txt
 
 ; Allow user to choose custom folder
 DisableDirPage=no
