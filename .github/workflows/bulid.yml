@@ -24,6 +24,9 @@ jobs:
     - name: Publish application
       run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained true --output privbrowser/publish
 
+    - name: Zip Portable Version
+      run: Compress-Archive -Path privbrowser/publish\* -DestinationPath PrivBrowser-Portable.zip
+
     - name: Install Inno Setup
       run: choco install innosetup -y
 
@@ -35,4 +38,10 @@ jobs:
       with:
         name: PrivBrowser-Setup
         path: '**/PrivBrowser-Setup.exe'
+
+    - name: Upload Portable Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PrivBrowser-Portable
+        path: PrivBrowser-Portable.zip
         
