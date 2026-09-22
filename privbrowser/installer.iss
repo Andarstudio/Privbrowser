@@ -1,37 +1,46 @@
-; PrivBrowser installer script
-; Built automatically by GitHub Actions using Inno Setup (pre-installed on
-; windows-latest runners). Output: Setup files\PrivBrowser-Setup.exe
-
-#define MyAppName "PrivBrowser"
-#define MyAppVersion "1.0"
-#define MyAppExeName "PrivBrowser.exe"
-
 [Setup]
-AppId={{A4C2E1F8-3B5D-4E9A-8C7F-PRIVBROWSER01}
-AppName={#MyAppName}
-AppVersion={#MyAppVersion}
+AppName=PrivBrowser
+AppVersion=1.0.0
+AppPublisher=PrivBrowser
 DefaultDirName={autopf}\PrivBrowser
-DefaultGroupName={#MyAppName}
-DisableProgramGroupPage=yes
-OutputDir=Setup files
-OutputBaseFilename=PrivBrowser-Setup
-Compression=lzma
+DefaultGroupName=PrivBrowser
+OutputDir=Output
+OutputBaseFilename=PrivBrowserSetup
+Compression=lzma2/max
 SolidCompression=yes
-ArchitecturesInstallIn64BitMode=x64
 
-[Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
+; Custom Icons
+SetupIconFile=app_icon.ico
+UninstallDisplayIcon={app}\PrivBrowser.exe
 
-[Tasks]
-Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"
+; Windows UAC Prompt ("Allow control of this device?")
+PrivilegesRequired=admin
+
+; Privacy Policy Page
+LicenseFile=privacy_policy.txt
+
+; Allow user to choose custom folder
+DisableDirPage=no
+DisableProgramGroupPage=yes
+
+[Messages]
+; Welcome Page Custom Text
+WelcomeLabel1=Welcome to PrivBrowser
+WelcomeLabel2=PrivBrowser is safe, private, and lightweight. It features built-in ad-blocking, a privacy shield, and lets you use your own private browser.%n%nClick Next to continue, or Cancel to exit Setup.
+
+; Ready / Confirmation Page
+ReadyLabel1=Do you want to install PrivBrowser on your computer?
+ReadyLabel2=Click Install to begin the installation, or click Back to review your settings.
 
 [Files]
-Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
+; Packages everything from your published build folder
+Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
+; Creates Desktop and Start Menu shortcuts
+Name: "{group}\PrivBrowser"; Filename: "{app}\PrivBrowser.exe"
+Name: "{autodesktop}\PrivBrowser"; Filename: "{app}\PrivBrowser.exe"
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
+; Finish Page checkbox to launch the app
+Filename: "{app}\PrivBrowser.exe"; Description: "Launch PrivBrowser"; Flags: postinstall nowait skipifsilent
