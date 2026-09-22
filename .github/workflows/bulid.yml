@@ -22,21 +22,27 @@ jobs:
     - name: Restore Dependencies
       run: dotnet restore privbrowser/PrivBrowser.csproj
 
-    - name: Build and Publish (Portable)
+    # 1. Build folder version for Inno Setup Installer
+    - name: Publish Folder (For Installer)
       run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained true --output privbrowser/publish
 
-    - name: Install Inno Setup
-      run: winget install JRSoftware.InnoSetup --silent --accept-source-agreements --accept-package-agreements
-
-    - name: Compile Installer (.exe)
+    # 2. Build Single Standalone EXE (Direct Open)
+    - name: Publish Direct-Open EXE
       run: |
-        $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-        & $iscc privbrowser\installer.iss
+        dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output privbrowser/direct-open
 
-    - name: Upload Artifacts
+    # 3. Compile Installer (.exe)
+    - name: Compile Installer (.exe)
+      uses: sandonascia/custom-inno-setup-action@v1
+      with:
+        filepath: 'privbrowser/installer.iss'
+
+    # 4. Upload BOTH EXEs into the artifact
+    - name: Upload Both Executables
       uses: actions/upload-artifact@v4
       with:
-        name: PrivBrowser-Releases
+        name: PrivBrowser-Executables
         path: |
-          privbrowser/publish/
-          privbrowser/Output/
+          privbrowser/direct-open/PrivBrowser.exe
+          privbrowser/Output/*.exe
+          
