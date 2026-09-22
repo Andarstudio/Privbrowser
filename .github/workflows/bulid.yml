@@ -30,6 +30,15 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Clean any stale build artifacts
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path . -Recurse -Directory -Include "bin","obj" | ForEach-Object {
+            Write-Host "Removing stale folder: $($_.FullName)"
+            Remove-Item -Recurse -Force $_.FullName
+          }
+          dotnet nuget locals all --clear
+
       - name: Enforce correct, verified CefSharp package
         shell: pwsh
         run: |
@@ -48,7 +57,7 @@ jobs:
 
       - name: Restore NuGet packages
         shell: pwsh
-        run: dotnet restore "$env:PROJECT_FILE"
+        run: dotnet restore "$env:PROJECT_FILE" --force
 
       - name: Show resolved package versions (diagnostic)
         shell: pwsh
