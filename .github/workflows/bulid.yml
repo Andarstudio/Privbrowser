@@ -41,8 +41,6 @@ jobs:
           dotnet remove "$env:PROJECT_FILE" package CefSharp.Wpf.NETCore 2>$null
           dotnet remove "$env:PROJECT_FILE" package CefSharp.Wpf.NetCore 2>$null
 
-          # Verified directly from CefSharp's official MinimalExample repo —
-          # this is their current real published version as of this build.
           dotnet add "$env:PROJECT_FILE" package CefSharp.Wpf.NetCore --version 151.3.240
 
           Write-Host "--- csproj AFTER fix ---"
@@ -54,6 +52,7 @@ jobs:
 
       - name: Show resolved package versions (diagnostic)
         shell: pwsh
+        continue-on-error: true
         run: dotnet list "$env:PROJECT_FILE" package --include-transitive
 
       - name: Publish (self-contained, win-x64, CefSharp/Chromium included)
