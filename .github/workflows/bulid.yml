@@ -2,62 +2,37 @@ name: Build PrivBrowser
 
 on:
   push:
-  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Check out source
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up .NET 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
 
-      - name: Restore
-        run: dotnet restore privbrowser/PrivBrowser.csproj
+    - name: Restore NuGet packages
+      run: dotnet restore privbrowser/PrivBrowser.csproj
 
-      - name: Build
-        run: dotnet build privbrowser/PrivBrowser.csproj --configuration Release --no-restore
+    - name: Publish application
+      run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained true
 
-      - name: Publish self-contained Windows app
-        shell: pwsh
-        run: |
-          dotnet publish privbrowser/PrivBrowser.csproj `
-            --configuration Release `
-            --runtime win-x64 `
-            --self-contained true `
-            -p:PublishSingleFile=false `
-            -p:PublishDir="$env:GITHUB_WORKSPACE\privbrowser\publish"
+    - name: Install Inno Setup
+      run: choco install innosetup -y
 
-      - name: Verify publish output
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "$env:GITHUB_WORKSPACE\privbrowser\publish\PrivBrowser.exe")) {
-            Write-Error "PrivBrowser.exe was not found in the publish directory."
-          }
-          Get-ChildItem "$env:GITHUB_WORKSPACE\privbrowser\publish" -Recurse
+    - name: Build Installer
+      run: iscc privbrowser/installer.iss
 
-      - name: Install Inno Setup
-        uses: jurplel/install-innosetup@v1
-
-      - name: Build installer
-        shell: pwsh
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
-            "$env:GITHUB_WORKSPACE\privbrowser\installer.iss"
-
-      - name: Upload published app
-        uses: actions/upload-artifact@v4
-        with:
-          name: PrivBrowser-publish
-          path: privbrowser/publish
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: PrivBrowser-installer
-          path: privbrowser/Setup files/PrivBrowser-Setup.exe
+    - name: Upload Installer Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PrivBrowser-Setup
+        path: '**/PrivBrowser-Setup.exe'
+        
