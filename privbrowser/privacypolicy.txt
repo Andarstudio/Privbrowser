@@ -1,0 +1,120 @@
+PRIVBROWSER PRIVACY POLICY
+
+Last Updated: September 22, 2026
+
+PrivBrowser is an open-source desktop web browser developed by Andar Studio.
+
+PrivBrowser is designed to minimize unnecessary data collection by the application itself.
+
+1. INFORMATION WE COLLECT
+
+PrivBrowser does not require users to create a PrivBrowser account.
+
+Depending on how the browser is used, information may be stored locally on the user's device, including:
+
+- Browsing history
+- Cookies
+- Website data
+- Cached files
+- Saved sessions
+- Browser settings
+- Download information
+
+This information is generally stored locally on the user's device and is not intentionally sent to Andar Studio.
+
+2. THIRD-PARTY WEBSITES
+
+Websites accessed through PrivBrowser may collect information according to their own privacy policies.
+
+This may include:
+
+- IP address
+- Browser and operating-system information
+- Cookies
+- Local storage
+- Information submitted by the user
+- Network or device information
+
+Andar Studio does not control the privacy practices of third-party websites.
+
+3. COOKIES AND WEBSITE DATA
+
+Websites may use cookies, local storage, cache, and similar technologies.
+
+PrivBrowser may store this information locally to allow websites to function correctly.
+
+4. PRIVACY FEATURES
+
+PrivBrowser may provide privacy and tracking-protection features.
+
+These features do not guarantee complete anonymity, privacy, or security.
+
+Users should not assume that PrivBrowser makes them completely anonymous online.
+
+5. ANALYTICS AND TELEMETRY
+
+PrivBrowser does not intentionally collect general-purpose analytics or tracking data unless such functionality is explicitly introduced and documented.
+
+If telemetry, analytics, crash reporting, or similar functionality is introduced in the future, this Privacy Policy may be updated.
+
+6. DOWNLOADS AND THIRD-PARTY SERVICES
+
+Downloads made through PrivBrowser are stored according to the browser and operating-system settings.
+
+Andar Studio is not responsible for the privacy, security, or content of third-party websites, services, extensions, or downloaded files.
+
+7. OPEN SOURCE
+
+PrivBrowser is open source.
+
+Source code and project information are available at:
+
+https://github.com/andarstudio/privbrowser
+
+8. OFFICIAL PRIVBROWSER WEBSITE
+
+Official PrivBrowser website:
+
+[EDIT THIS URL]
+
+9. CHILDREN'S PRIVACY
+
+PrivBrowser does not intentionally collect personal information from children through a PrivBrowser account because no PrivBrowser account is required.
+
+Websites accessed through the browser may have their own policies regarding children's information.
+
+10. SECURITY
+
+Andar Studio takes reasonable steps to maintain the security of the PrivBrowser project.
+
+However, no software or internet connection can be guaranteed to be completely secure.
+
+11. CHANGES TO THIS POLICY
+
+This Privacy Policy may be updated when PrivBrowser's features or data practices change.
+
+The "Last Updated" date will be changed when significant updates are made.
+
+12. CONTACT
+
+For privacy questions, security reports, or other concerns, contact Andar Studio:
+
+Email:
+erdenemandakhamartuvshin@outlook.com
+
+GitHub:
+https://github.com/andarstudio/privbrowser
+
+13. SUMMARY
+
+PrivBrowser does not require an account and is designed to minimize unnecessary application-level data collection.
+
+Browser data such as history, cookies, cache, and website data may be stored locally.
+
+Websites visited through PrivBrowser may independently collect information.
+
+PrivBrowser's privacy features do not guarantee complete anonymity or security.
+
+© 2026 Andar Studio
+
+This document describes the intended privacy behavior of PrivBrowser and is not legal advice. It should be updated if the application's actual data practices change.
