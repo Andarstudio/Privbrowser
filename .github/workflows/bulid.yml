@@ -1,181 +1,40 @@
-name: Build PrivBrowser Installer
+name: Build PrivBrowser
 
 on:
   push:
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Locate PrivBrowser.csproj
-        id: find_csproj
-        shell: pwsh
-        run: |
-          $csproj = Get-ChildItem -Path . -Recurse -Filter "PrivBrowser.csproj" -File | Select-Object -First 1
-          if (-not $csproj) {
-            Write-Error "No PrivBrowser.csproj found anywhere in the repository. Aborting build."
-            exit 1
-          }
-          $projDir = $csproj.DirectoryName
-          Write-Host "Found csproj at: $($csproj.FullName)"
-          "PROJECT_DIR=$projDir" >> $env:GITHUB_ENV
-          "PROJECT_FILE=$($csproj.FullName)" >> $env:GITHUB_ENV
-
-      - name: Setup .NET 8
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: 8.0.x
 
-      - name: Clean any stale build artifacts
-        shell: pwsh
+      - name: Restore
+        run: dotnet restore privbrowser/PrivBrowser.csproj
+
+      - name: Build
+        run: dotnet build privbrowser/PrivBrowser.csproj -c Release --no-restore
+
+      - name: Publish
         run: |
-          Get-ChildItem -Path . -Recurse -Directory -Include "bin","obj" | ForEach-Object {
-            Write-Host "Removing stale folder: $($_.FullName)"
-            Remove-Item -Recurse -Force $_.FullName
-          }
-          dotnet nuget locals all --clear
-
-      - name: Enforce correct, verified CefSharp package
-        shell: pwsh
-        run: |
-          Write-Host "--- csproj BEFORE fix ---"
-          Get-Content "$env:PROJECT_FILE"
-
-          dotnet remove "$env:PROJECT_FILE" package CefSharp.Common 2>$null
-          dotnet remove "$env:PROJECT_FILE" package CefSharp.Common.NETCore 2>$null
-          dotnet remove "$env:PROJECT_FILE" package CefSharp.Wpf.NETCore 2>$null
-          dotnet remove "$env:PROJECT_FILE" package CefSharp.Wpf.NetCore 2>$null
-
-          dotnet add "$env:PROJECT_FILE" package CefSharp.Wpf.NetCore --version 151.3.240
-
-          Write-Host "--- csproj AFTER fix ---"
-          Get-Content "$env:PROJECT_FILE"
-
-      - name: Restore NuGet packages
-        shell: pwsh
-        run: dotnet restore "$env:PROJECT_FILE" --force
-
-      - name: Show resolved package versions (diagnostic)
-        shell: pwsh
-        continue-on-error: true
-        run: dotnet list "$env:PROJECT_FILE" package --include-transitive
-
-      - name: Publish (self-contained, win-x64, CefSharp/Chromium included)
-        shell: pwsh
-        run: |
-          dotnet publish "$env:PROJECT_FILE" `
+          dotnet publish privbrowser/PrivBrowser.csproj `
             -c Release `
             -r win-x64 `
             --self-contained true `
-            -p:PublishReadyToRun=false `
             -p:PublishSingleFile=false `
-            -o "$env:PROJECT_DIR\publish"
-          "PUBLISH_DIR=$env:PROJECT_DIR\publish" >> $env:GITHUB_ENV
-
-      - name: Verify Chromium/CefSharp runtime files are present
-        shell: pwsh
-        run: |
-          $publish = $env:PUBLISH_DIR
-          $required = @("PrivBrowser.exe", "libcef.dll", "CefSharp.Core.dll", "CefSharp.BrowserSubprocess.exe", "icudtl.dat")
-          foreach ($f in $required) {
-            if (-not (Test-Path (Join-Path $publish $f))) {
-              Write-Error "Missing required Chromium/CefSharp file: $f — publish output is incomplete."
-              exit 1
-            }
-          }
-          if (-not (Test-Path (Join-Path $publish "locales"))) {
-            Write-Error "Missing 'locales' folder — Chromium locale resources were not published."
-            exit 1
-          }
-          $pakCount = (Get-ChildItem (Join-Path $publish "*.pak") -ErrorAction SilentlyContinue).Count
-          if ($pakCount -eq 0) {
-            Write-Error "No .pak resource files found in publish output — Chromium resources missing."
-            exit 1
-          }
-          Write-Host "Chromium/CefSharp runtime verified: found locales/, $pakCount .pak file(s), and all required binaries."
-
-      - name: Upload raw published app
-        uses: actions/upload-artifact@v4
-        with:
-          name: PrivBrowser-app
-          path: ${{ env.PUBLISH_DIR }}
+            -p:PublishDir=publish
 
       - name: Install Inno Setup
-        shell: pwsh
-        run: choco install innosetup -y --no-progress
+        uses: jurplel/install-setup-action@v0
+        # or install via choco if needed
 
-      - name: Generate Inno Setup script
-        shell: pwsh
+      - name: Build installer
         run: |
-          $issPath = Join-Path $env:PROJECT_DIR "installer.iss"
-          $iconLine = ""
-          if (Test-Path (Join-Path $env:PROJECT_DIR "app.ico")) {
-            $iconLine = "SetupIconFile=app.ico"
-          }
-
-          @"
-          #define MyAppName "PrivBrowser"
-          #define MyAppVersion "1.0"
-          #define MyAppPublisher "Andar Studio LLC"
-          #define MyAppExeName "PrivBrowser.exe"
-
-          [Setup]
-          AppId={{A4C2E1F8-3B5D-4E9A-8C7F-PRIVBROWSER01}
-          AppName={#MyAppName}
-          AppVersion={#MyAppVersion}
-          AppPublisher={#MyAppPublisher}
-          DefaultDirName={autopf}\PrivBrowser
-          DefaultGroupName={#MyAppName}
-          DisableProgramGroupPage=yes
-          OutputDir=Setup files
-          OutputBaseFilename=PrivBrowser-Setup
-          Compression=lzma
-          SolidCompression=yes
-          ArchitecturesInstallIn64BitMode=x64
-          $iconLine
-
-          [Languages]
-          Name: "english"; MessagesFile: "compiler:Default.isl"
-
-          [Tasks]
-          Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"
-
-          [Files]
-          Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
-
-          [Icons]
-          Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-          Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-          Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
-
-          [Run]
-          Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
-          "@ | Out-File -FilePath $issPath -Encoding utf8
-          Write-Host "Generated installer.iss at: $issPath"
-          "ISS_PATH=$issPath" >> $env:GITHUB_ENV
-
-      - name: Compile installer with Inno Setup
-        shell: pwsh
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "$env:ISS_PATH"
-          "INSTALLER_DIR=$env:PROJECT_DIR\Setup files" >> $env:GITHUB_ENV
-
-      - name: Verify installer was produced
-        shell: pwsh
-        run: |
-          $exePath = Join-Path $env:INSTALLER_DIR "PrivBrowser-Setup.exe"
-          if (-not (Test-Path $exePath)) {
-            Write-Error "PrivBrowser-Setup.exe was not produced by Inno Setup."
-            exit 1
-          }
-          Write-Host "Installer built: $exePath"
-
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: PrivBrowser-Setup
-          path: ${{ env.INSTALLER_DIR }}\PrivBrowser-Setup.exe
+          & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' privbrowser\installer.iss
