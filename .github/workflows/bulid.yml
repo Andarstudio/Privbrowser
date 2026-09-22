@@ -22,7 +22,7 @@ jobs:
       run: dotnet restore privbrowser/PrivBrowser.csproj
 
     - name: Publish application
-      run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained true
+      run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained true --output privbrowser/publish
 
     - name: Install Inno Setup
       run: choco install innosetup -y
