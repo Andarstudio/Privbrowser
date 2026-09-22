@@ -10,7 +10,7 @@ Compression=lzma2/max
 SolidCompression=yes
 
 ; Custom Icons
-SetupIconFile=app_icon.ico
+SetupIconFile=app.ico
 UninstallDisplayIcon={app}\PrivBrowser.exe
 
 ; Windows UAC Prompt ("Allow control of this device?")
