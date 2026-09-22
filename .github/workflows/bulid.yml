@@ -9,9 +9,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out source
+        uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Set up .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
@@ -20,21 +21,43 @@ jobs:
         run: dotnet restore privbrowser/PrivBrowser.csproj
 
       - name: Build
-        run: dotnet build privbrowser/PrivBrowser.csproj -c Release --no-restore
+        run: dotnet build privbrowser/PrivBrowser.csproj --configuration Release --no-restore
 
-      - name: Publish
+      - name: Publish self-contained Windows app
+        shell: pwsh
         run: |
           dotnet publish privbrowser/PrivBrowser.csproj `
-            -c Release `
-            -r win-x64 `
+            --configuration Release `
+            --runtime win-x64 `
             --self-contained true `
             -p:PublishSingleFile=false `
-            -p:PublishDir=publish
+            -p:PublishDir="$env:GITHUB_WORKSPACE\privbrowser\publish"
+
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "$env:GITHUB_WORKSPACE\privbrowser\publish\PrivBrowser.exe")) {
+            Write-Error "PrivBrowser.exe was not found in the publish directory."
+          }
+          Get-ChildItem "$env:GITHUB_WORKSPACE\privbrowser\publish" -Recurse
 
       - name: Install Inno Setup
-        uses: jurplel/install-setup-action@v0
-        # or install via choco if needed
+        uses: jurplel/install-innosetup@v1
 
       - name: Build installer
+        shell: pwsh
         run: |
-          & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' privbrowser\installer.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "$env:GITHUB_WORKSPACE\privbrowser\installer.iss"
+
+      - name: Upload published app
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrivBrowser-publish
+          path: privbrowser/publish
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrivBrowser-installer
+          path: privbrowser/Setup files/PrivBrowser-Setup.exe
