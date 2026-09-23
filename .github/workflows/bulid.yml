@@ -27,7 +27,7 @@ jobs:
       - name: Verify APK was produced
         shell: bash
         run: |
-          apk=$(find privbrowser-android -name "*.apk" | head -n 1)
+          apk=$(find privbrowserapk -name "*.apk" | head -n 1)
           if [ -z "$apk" ]; then
             echo "No APK found in build output."
             exit 1
