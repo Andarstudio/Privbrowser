@@ -37,5 +37,5 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PrivBrowser-Android-apk
-          path: privbrowser-android/app/build/outputs/apk/debug/*.apk
+          name: PrivBrowserapk
+          path: privbrowserapk/app/build/outputs/apk/debug/*.apk
