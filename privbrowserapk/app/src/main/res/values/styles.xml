@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.PrivBrowser" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#1B1F1D</item>
+        <item name="colorPrimaryDark">#12160F</item>
+        <item name="colorAccent">#3B82F6</item>
+    </style>
+</resources>
