@@ -21,7 +21,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build debug APK
-        working-directory: privbrowser-android
+        working-directory: privbrowserapk
         run: gradle assembleDebug
 
       - name: Verify APK was produced
