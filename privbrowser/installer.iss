@@ -1,6 +1,5 @@
 ; PrivBrowser installer script
-; Compile with Inno Setup 6 (ISCC.exe) — see .github/workflows/build.yml,
-; which compiles this automatically on every push.
+; Compile with Inno Setup 6 (ISCC.exe)
 
 #define MyAppName "PrivBrowser"
 #define MyAppVersion "1.0"
@@ -8,7 +7,7 @@
 #define MyAppExeName "PrivBrowser.exe"
 
 [Setup]
-AppId={{A4C2E1F8-3B5D-4E9A-8C7F-PRIVBROWSER01}
+AppId={{A4C2E1F8-3B5D-4E9A-8C7F-123456789012}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -16,7 +15,7 @@ DefaultDirName={autopf}\PrivBrowser
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
-OutputDir=Setup files
+OutputDir=Output
 OutputBaseFilename=PrivBrowser-Setup
 Compression=lzma
 SolidCompression=yes
@@ -37,7 +36,7 @@ WelcomeLabel2=Welcome to PrivBrowser. It's privacy-focused and has an ad blocker
 ButtonNext=&Continue
 ButtonCancel=&Close
 
-; --- Step 3: Privacy policy screen (uses LicenseFile above) ---
+; --- Step 3: Privacy policy screen ---
 WizardLicense=Privacy Policy
 LicenseLabel=Please read the following privacy policy before continuing.
 LicenseLabel3=I accept the privacy policy. By continuing, you agree to how PrivBrowser handles your data as described above.
@@ -69,7 +68,7 @@ ButtonFinish=&Finish
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"
 
 [Files]
-Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
+Source: "..\publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
