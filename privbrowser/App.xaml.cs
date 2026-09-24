@@ -1,38 +1,162 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using CefSharp;
 using CefSharp.Wpf;
+using PrivBrowser.Cef;
 using PrivBrowser.Handlers;
+using PrivBrowser.Services;
+using PrivBrowser.Views;
 
 namespace PrivBrowser
 {
-    public partial class App : Application
+    public class BrowserTabItem
     {
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
+        public string HeaderText { get; set; } = "New Tab";
+        public ChromiumWebBrowser Browser { get; set; } = null!;
+    }
 
-            var settings = new CefSettings
+    public partial class MainWindow : Window
+    {
+        private readonly List<BrowserTabItem> _tabs = new();
+
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            await ProfileManager.Instance.InitializeAsync();
+            await HistoryService.Instance.InitializeAsync();
+            await BookmarkService.Instance.InitializeAsync();
+
+            CreateNewTab("https://www.google.com");
+        }
+
+        private void CreateNewTab(string url)
+        {
+            var browser = new ChromiumWebBrowser
             {
-                CachePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache"),
-                LogSeverity = LogSeverity.Disable
+                RequestHandler = new AdBlockRequestHandler(),
+                LifeSpanHandler = new CustomLifeSpanHandler { OnNewTabRequested = (u) => Dispatcher.Invoke(() => CreateNewTab(u)) },
+                MenuHandler = new CustomContextMenuHandler(),
+                DownloadHandler = new DownloadService()
             };
 
-            CefSharpSettings.WcfEnabled = true;
-
-            settings.CefCommandLineArgs.Add("disable-telemetry", "1");
-            settings.CefCommandLineArgs.Add("disable-component-update", "1");
-            settings.CefCommandLineArgs.Add("no-pings", "1");
-            settings.CefCommandLineArgs.Add("enable-do-not-track", "1");
-
-            settings.RegisterScheme(new CefCustomScheme
+            var tabItem = new BrowserTabItem
             {
-                SchemeName = "privbrowser",
-                SchemeHandlerFactory = new PrivBrowserSchemeHandlerFactory()
-            });
+                HeaderText = "Loading...",
+                Browser = browser
+            };
 
-            Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
+            browser.TitleChanged += (s, args) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    tabItem.HeaderText = args.NewValue?.ToString() ?? "New Tab";
+                    MainTabControl.Items.Refresh();
+                });
+            };
+
+            browser.AddressChanged += (s, args) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (MainTabControl.SelectedItem == tabItem)
+                    {
+                        UrlTextBox.Text = args.NewValue?.ToString() ?? "";
+                    }
+                    _ = HistoryService.Instance.AddEntryAsync(args.NewValue?.ToString() ?? "", tabItem.HeaderText, false);
+                });
+            };
+
+            _tabs.Add(tabItem);
+            MainTabControl.Items.Add(tabItem);
+            MainTabControl.SelectedItem = tabItem;
+
+            browser.LoadUrl(url);
+        }
+
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MainTabControl.SelectedItem is BrowserTabItem item)
+            {
+                BrowserContainer.Children.Clear();
+                BrowserContainer.Children.Add(item.Browser);
+                UrlTextBox.Text = item.Browser.Address;
+            }
+        }
+
+        private void NewTab_Click(object sender, RoutedEventArgs e)
+        {
+            CreateNewTab("https://www.google.com");
+        }
+
+        private void CloseTab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is BrowserTabItem item)
+            {
+                item.Browser.Dispose();
+                _tabs.Remove(item);
+                MainTabControl.Items.Remove(item);
+
+                if (_tabs.Count == 0)
+                {
+                    Close();
+                }
+            }
+        }
+
+        private void Back_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainTabControl.SelectedItem is BrowserTabItem item && item.Browser.CanGoBack)
+                item.Browser.Back();
+        }
+
+        private void Forward_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainTabControl.SelectedItem is BrowserTabItem item && item.Browser.CanGoForward)
+                item.Browser.Forward();
+        }
+
+        private void Reload_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainTabControl.SelectedItem is BrowserTabItem item)
+                item.Browser.Reload();
+        }
+
+        private void UrlTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && MainTabControl.SelectedItem is BrowserTabItem item)
+            {
+                string input = UrlTextBox.Text.Trim();
+                if (!input.StartsWith("http://") && !input.StartsWith("https://") && !input.StartsWith("about:"))
+                {
+                    if (input.Contains(".") && !input.Contains(" "))
+                    {
+                        input = "https://" + input;
+                    }
+                    else
+                    {
+                        input = $"https://www.google.com/search?q={Uri.EscapeDataString(input)}";
+                    }
+                }
+                item.Browser.LoadUrl(input);
+            }
+        }
+
+        private void OpenSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new SettingsWindow { Owner = this };
+            win.ShowDialog();
+        }
+
+        private void ToggleTerminal_Click(object sender, RoutedEventArgs e)
+        {
+            TerminalContainer.Visibility = TerminalContainer.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
         }
     }
 }
