@@ -1,0 +1,55 @@
+# Privacy Policy for PrivBrowser
+
+**Effective Date:** September 24, 2026
+
+**Developer:** Andar Studio
+
+**Repository:** [https://github.com/Andarstudio/Privbrowser](https://www.google.com/search?q=https://github.com/Andarstudio/Privbrowser&utm_source=gemini)
+
+---
+
+### 1. Overview
+
+PrivBrowser is built from the ground up with a local-first, privacy-focused design. Developed by Andar Studio, PrivBrowser operates under a strict principle: **your personal data stays on your device and remains under your control.**
+
+### 2. Information We Do NOT Collect
+
+Andar Studio does not collect, track, store, or transmit any of your personal data or usage activity. Specifically:
+
+* **No Telemetry or Usage Tracking:** We do not track application launches, feature usage, crash reports, or hardware identification.
+* **No Cloud Accounts or Central Servers:** PrivBrowser does not use external user account databases, authentication servers, or sync services managed by Andar Studio.
+* **No Remote Browsing Logs:** Your URLs, search queries, page titles, and session details are never sent to external servers owned by Andar Studio.
+
+### 3. Data Stored Locally on Your Machine
+
+PrivBrowser saves certain data locally to your computer solely to provide standard browser capabilities:
+
+* **Browsing History & Bookmarks:** Stored in local application storage files on your device.
+* **Password Vault & Saved Credentials:** Saved credentials and password manager entries reside strictly in local encrypted files on your disk.
+* **Profiles & Custom Preferences:** Custom user configurations, layout settings, and active profiles are saved locally.
+* **Terminal Command History:** Logs and outputs executed inside the internal terminal control remain strictly in memory or local application storage.
+
+You can wipe your browsing history, saved credentials, and profile storage at any time via the browser settings or terminal interface.
+
+### 4. Ad & Tracker Protection
+
+PrivBrowser uses built-in network request filters to detect and block third-party trackers, telemetry scripts, and advertisement hosts before connections are initialized.
+
+* Tracking request filtration happens entirely on your machine.
+* No outbound request logs or blocked domain metrics are transmitted back to Andar Studio.
+
+### 5. Third-Party Websites & External Services
+
+* **Embedded Web Rendering:** PrivBrowser renders web content using CefSharp (Chromium Embedded Framework). Web pages you visit may set cookies, run scripts, or store data according to their own privacy policies.
+* **Search Engine Queries:** Address bar queries not entered as explicit URLs default to search engine endpoints (e.g., Google Search). These queries are subject to the privacy policy of the chosen search provider.
+
+### 6. Changes to This Privacy Policy
+
+This Privacy Policy may be updated to reflect changes in software architecture or legal compliance. Updated policy revisions will be published directly to the repository.
+
+### 7. Contact Information
+
+For questions regarding PrivBrowser or to report technical issues, reach out through the official repository issue tracker:
+
+* **GitHub Repository:** [Andarstudio/Privbrowser](https://www.google.com/search?q=https://github.com/Andarstudio/Privbrowser&utm_source=gemini)
+* **Publisher:** Andar Studio
