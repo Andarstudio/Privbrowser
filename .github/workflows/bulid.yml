@@ -30,8 +30,8 @@ jobs:
       run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained false -o ${{ github.workspace }}/publish
 
     - name: Build Inno Setup Installer
-      run: |
-        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" privbrowser/installer.iss
+      shell: cmd
+      run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" privbrowser/installer.iss'
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
