@@ -26,10 +26,13 @@ jobs:
     - name: Publish Application (win-x64)
       run: dotnet publish PrivBrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained false -o ./publish
 
+    - name: Install Inno Setup
+      run: choco install innosetup -y
+
     - name: Compile Inno Setup Installer
-      uses: joncloud/inno-setup-action@v2
-      with:
-        filepath: PrivBrowser/installer.iss
+      run: |
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" PrivBrowser/installer.iss
+      shell: powershell
 
     - name: Upload Installer Artifact
       uses: actions/upload-artifact@v4
