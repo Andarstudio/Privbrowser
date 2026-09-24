@@ -23,8 +23,8 @@ SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 WizardStyle=modern
 SetupIconFile=app.ico
-WizardImageFile=wizard_large.bmp
-WizardSmallImageFile=wizard_small.bmp
+WizardImageFile=app.bmp
+WizardSmallImageFile=app.bmp
 LicenseFile=privacypolicy.txt
 
 [Languages]
