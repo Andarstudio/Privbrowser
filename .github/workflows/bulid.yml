@@ -1,0 +1,43 @@
+name: Build PrivBrowser
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore Dependencies
+      run: dotnet restore privbrowser/PrivBrowser.csproj
+
+    - name: Build Project (Release x64)
+      run: dotnet build privbrowser/PrivBrowser.csproj -c Release --no-restore
+
+    - name: Publish Executable
+      run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained false -o ${{ github.workspace }}/publish
+
+    - name: Build Inno Setup Installer
+      run: |
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" privbrowser/installer.iss
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: PrivBrowser-Build
+        path: |
+          ${{ github.workspace }}/publish
+          privbrowser/Output/*.exe
+          
