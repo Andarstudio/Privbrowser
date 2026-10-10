@@ -4,43 +4,40 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "privbrowser/linux/**"
-      - ".github/workflows/build-linux.yml"
+      - "privbrowserdeb/**"
+      - ".github/workflows/build.yml"
 
 permissions:
   contents: read
 
 jobs:
-  build-linux:
-    name: Build Ubuntu DEB
+  build:
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install .NET SDK
+      - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      - name: Check Linux project
+      - name: Install packaging tools
         run: |
-          test -f privbrowserdeb/PrivBrowser.Linux.csproj || {
-            echo "Linux project file not found!"
-            exit 1
-          }
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev
 
-      - name: Publish Linux application
+      - name: Build PrivBrowser
         run: |
           dotnet publish \
             privbrowserdeb/PrivBrowser.Linux.csproj \
-            --configuration Release \
-            --runtime linux-x64 \
+            -c Release \
+            -r linux-x64 \
             --self-contained true \
             -o publish
 
-      - name: Create DEB package
+      - name: Create Debian package
         run: |
           mkdir -p package/DEBIAN
           mkdir -p package/opt/privbrowser
@@ -55,8 +52,8 @@ jobs:
           Priority: optional
           Architecture: amd64
           Maintainer: Andar Studio
-          Description: PrivBrowser for Linux
-           Linux edition of the PrivBrowser web browser.
+          Description: PrivBrowser Linux Edition
+           PrivBrowser web browser for Ubuntu Linux.
           EOF
 
           cat > package/usr/bin/privbrowser <<'EOF'
@@ -68,9 +65,8 @@ jobs:
 
           dpkg-deb --build package privbrowser-linux-amd64.deb
 
-      - name: Upload DEB artifact
+      - name: Upload Ubuntu package
         uses: actions/upload-artifact@v4
         with:
           name: privbrowser-linux-amd64
           path: privbrowser-linux-amd64.deb
-          if-no-files-found: error
