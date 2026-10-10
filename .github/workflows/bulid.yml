@@ -1,43 +1,71 @@
-name: Build PrivBrowser
+name: Build PrivBrowser Linux
 
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
   workflow_dispatch:
+  push:
+    paths:
+      - "privbrowser-linux/**"
+      - ".github/workflows/build.yml"
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-24.04
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET 8 SDK
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            dotnet-sdk-8.0 \
+            dpkg-dev \
+            fakeroot
 
-    - name: Restore Dependencies
-      run: dotnet restore privbrowser/PrivBrowser.csproj
+      - name: Publish Linux application
+        run: |
+          dotnet publish privbrowser-linux/PrivBrowser.Linux.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -o publish
 
-    - name: Build Project (Release x64)
-      run: dotnet build privbrowser/PrivBrowser.csproj -c Release --no-restore
+      - name: Create Debian package structure
+        run: |
+          mkdir -p package/DEBIAN
+          mkdir -p package/opt/privbrowser
+          mkdir -p package/usr/bin
 
-    - name: Publish Executable
-      run: dotnet publish privbrowser/PrivBrowser.csproj -c Release -r win-x64 --self-contained false -o ${{ github.workspace }}/publish
+          cp -a publish/. package/opt/privbrowser/
 
-    - name: Build Inno Setup Installer
-      shell: cmd
-      run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" privbrowser/installer.iss'
+          cat > package/DEBIAN/control <<'EOF'
+          Package: privbrowser
+          Version: 1.0.0
+          Section: web
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Andar Studio
+          Description: PrivBrowser web browser
+           Linux edition of PrivBrowser.
+          EOF
 
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: PrivBrowser-Build
-        path: |
-          ${{ github.workspace }}/publish
-          privbrowser/Output/*.exe
-          
+          cat > package/usr/bin/privbrowser <<'EOF'
+          #!/bin/sh
+          exec /opt/privbrowser/PrivBrowser.Linux "$@"
+          EOF
+
+          chmod 755 package/usr/bin/privbrowser
+
+      - name: Build DEB package
+        run: |
+          dpkg-deb --build package privbrowser-linux-amd64.deb
+
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: privbrowser-linux-deb
+          path: privbrowser-linux-amd64.deb
