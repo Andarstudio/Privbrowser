@@ -12,13 +12,14 @@ permissions:
 
 jobs:
   build:
+    name: Build Ubuntu DEB
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Install .NET
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
@@ -28,12 +29,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y dpkg-dev
 
-      - name: Build PrivBrowser
+      - name: Publish Linux application
         run: |
           dotnet publish \
             privbrowserdeb/PrivBrowser.Linux.csproj \
-            -c Release \
-            -r linux-x64 \
+            --configuration Release \
+            --runtime linux-x64 \
             --self-contained true \
             -o publish
 
@@ -63,10 +64,11 @@ jobs:
 
           chmod 755 package/usr/bin/privbrowser
 
-          dpkg-deb --build package privbrowser-linux-amd64.deb
+          dpkg-deb --root-owner-group --build package privbrowser-linux-amd64.deb
 
-      - name: Upload Ubuntu package
-        uses: actions/upload-artifact@v4
+      - name: Upload DEB package
+        uses: actions/upload-artifact@v6
         with:
           name: privbrowser-linux-amd64
           path: privbrowser-linux-amd64.deb
+          if-no-files-found: error
