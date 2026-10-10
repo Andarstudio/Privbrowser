@@ -1,0 +1,76 @@
+name: Build PrivBrowser Linux DEB
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "privbrowser/linux/**"
+      - ".github/workflows/build-linux.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    name: Build Ubuntu DEB
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Check Linux project
+        run: |
+          test -f privbrowserdeb/PrivBrowser.Linux.csproj || {
+            echo "Linux project file not found!"
+            exit 1
+          }
+
+      - name: Publish Linux application
+        run: |
+          dotnet publish \
+            privbrowserdeb/PrivBrowser.Linux.csproj \
+            --configuration Release \
+            --runtime linux-x64 \
+            --self-contained true \
+            -o publish
+
+      - name: Create DEB package
+        run: |
+          mkdir -p package/DEBIAN
+          mkdir -p package/opt/privbrowser
+          mkdir -p package/usr/bin
+
+          cp -a publish/. package/opt/privbrowser/
+
+          cat > package/DEBIAN/control <<'EOF'
+          Package: privbrowser
+          Version: 1.0.0
+          Section: web
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Andar Studio
+          Description: PrivBrowser for Linux
+           Linux edition of the PrivBrowser web browser.
+          EOF
+
+          cat > package/usr/bin/privbrowser <<'EOF'
+          #!/bin/sh
+          exec /opt/privbrowser/PrivBrowser.Linux "$@"
+          EOF
+
+          chmod 755 package/usr/bin/privbrowser
+
+          dpkg-deb --build package privbrowser-linux-amd64.deb
+
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: privbrowser-linux-amd64
+          path: privbrowser-linux-amd64.deb
+          if-no-files-found: error
